@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ボイスガチャ</title>
+<style>
+body {
+  min-height: 100vh;
+  margin: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  font-family: x10y12pxDonguriDuel;
+  font-size: 20px;
+
+  background-image: url("img/bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+#darkOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  mix-blend-mode: multiply;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+
+  z-index: 0;
+}
+
+.snow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(8px 6px at 20px 30px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(6px 6px at 100px 150px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(6px 6px at 200px 80px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(6px 6px at 300px 200px, rgba(255,255,255,0.5), transparent),
+    radial-gradient(4px 4px at 300px 200px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(4px 4px at 50px 250px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(4px 4px at 150px 50px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(8px 8px at 400px 120px, rgba(255,255,255,0.8), transparent);
+  background-size: 500px 500px;
+  animation: snowFall 17s linear infinite;
+}
+
+@keyframes snowFall {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 500px;
+  }
+}
+
+@keyframes sway {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(3deg); }
+  50%  { transform: rotate(0deg); }
+  75%  { transform: rotate(-3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.effectArea {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.effectInner {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+#effect {
+  width: 180px;
+  animation: sway 1.2s ease-in-out infinite;
+  transform-origin: center bottom;
+
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.gachaButtonWrap {
+  position: relative;
+  width: 240px;
+  height: 100px;
+
+  margin: 0 auto;
+}
+
+#gachaButtonGif {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 240px;
+  height: 100px;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+
+  z-index: 2; /* ボタンの上 */
+}
+
+
+h1 {
+  -webkit-text-stroke: 2px black;
+  color: white;
+}
+
+p, #result {
+  color: black;
+  -webkit-text-stroke: 0.5px white;
+  text-stroke: 0.5px white;
+}
+
+button {
+  font-family: x10y12pxDonguriDuel;
+  font-size: 25px;
+  padding: 15px 30px;
+  margin: 10px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  background-color: #ffcc66;
+}
+.gachaButton {
+  width: 240px;
+  height: 100px;
+
+  margin: 0;
+
+  background-image: url("img/gacha.button.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  background-color: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  padding: 0;
+
+  cursor: pointer;
+}
+
+.gachaButton:focus {
+  outline: none;
+}
+
+.gachaButton:hover {
+  filter: brightness(1.1);
+}
+
+.gachaButton:active {
+  transform: scale(0.97);
+}
+
+#playButton {
+  visibility: hidden;
+
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2; 
+
+  font-size: 28px;
+  color: #b0c4de;
+
+  background: rgba(255,255,255,0.85);
+  border: none;
+  margin: 0;
+  box-shadow: none;
+  cursor: pointer;
+
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#playButton:hover {
+  color: #b0c4de;
+  background: rgba(255,255,255,0.95);
+}
+
+#playButton:active {
+  color: #b0c4de;
+}
+
+#effectGif {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  z-index: 1;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+#result {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  z-index: 3; 
+
+  font-size: 24px;
+  white-space: nowrap;
+
+  color: black;
+  -webkit-text-stroke: 0.5px white;
+}
+
+.gacha-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.text-img {
+  display: block;
+  margin: 10px auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.text-img {
+  display: block;
+  margin: 10px auto;
+  height: auto;
+  margin-bottom: 50px;
+}
+
+.title-img {
+  width: 80%;
+  max-width: 700px;
+  margin-bottom: 120px;
+}
+
+.twitter-img {
+  width: 25%;
+  max-width: 350px;
+  margin-bottom: 20px;
+}
+
+.guide-img {
+  width: 70%;
+  max-width: 600px;
+  margin-bottom: 30px;
+}
+
+.result-img {
+  width: 90%;
+  max-width: 600px;
+  position: relative;
+  z-index: 20;
+}
+
+.playArea {
+  position: relative;
+  width: 180px;
+  height: 90px;
+}
+
+.effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  z-index: 1;
+
+  opacity: 0;
+  pointer-events: none;
+}
+
+.play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (max-width: 768px) {
+  .title-img {
+    width: 100%;
+    margin-bottom: 60px;
+  }
+
+  .guide-img {
+    width: 100%;
+  }
+
+  .result-img {
+    width: 80%;
+  }
+
+  .gachaButtonWrap {
+    transform: scale(0.9);
+  }
+}
+
+</style>
+</head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<body>
+
+
+<div class="snow"></div>
+
+<div id="darkOverlay"></div>
+
+<div class="container">
+
+<img src="img/meibisan_voice_gacha.png" alt="タイトル" class="text-img title-img">
+<img src="img/twitter_id.png" alt="x_account" class="text-img twitter-img">
+<img src="img/kokokara_gacha.png" alt="" class="text-img guide-img">
+
+
+<div class="gachaButtonWrap">
+  <button class="gachaButton" onclick="gacha()"></button>
+
+  <img
+    id="gachaLoading"
+    src="img/gacha_loading.gif"
+    class="gacha-loading"
+  >
+</div>
+
+<p id="result">　</p>
+
+<div class="effectArea">
+  <div class="effectInner">
+
+    <img id="effectGif" src="img/gacha_effect.gif" alt="">
+
+    <img
+      id="effect"
+      src="img/gacha_chu.png"
+      alt=""
+      style="visibility:hidden;"
+    >
+
+  <div class="playArea">
+    <img
+      id="effectGif"
+      src="img/effect.gif"
+      class="effect"
+    >
+
+    <button
+      id="playButton"
+      class="play-btn"
+      onclick="playVoice()"
+    >▶</button>
+  </div>
+
+      <img
+        id="resultImage"
+        src=""
+        alt=""
+        class="text-img result-img"
+      >
+    </div>
+
+     <button onclick="shareOnX()">Xでシェア</button>
+
+  </div>
+</div>
+
+
+<script>
+const gachaLoading = document.getElementById("gachaLoading");
+
+const voices = [
+  "voice/01.mp3",
+  "voice/02.mp3",
+  "voice/03.mp3",
+  "voice/04.mp3",
+  "voice/05.mp3",
+  "voice/06.mp3",
+  "voice/07.mp3",
+  "voice/08.mp3",
+  "voice/09.mp3",
+  "voice/10.mp3",
+  "voice/11.mp3",
+  "voice/12.mp3",
+  "voice/13.mp3",
+  "voice/14.mp3",
+  "voice/15.mp3",
+  "voice/16.mp3",
+  "voice/17.mp3",
+  "voice/18.mp3",
+  "voice/19.mp3",
+  "voice/20.mp3",
+  "voice/21.mp3",
+  "voice/22.mp3",
+  "voice/23.mp3",
+  "voice/24.mp3",
+  "voice/25.mp3",
+  "voice/26.mp3",
+  "voice/27.mp3",
+  "voice/28.mp3",
+  "voice/29.mp3",
+  "voice/30.mp3",
+  "voice/31.mp3",
+  "voice/32.mp3",
+  "voice/33.mp3",
+  "voice/34.mp3",
+  "voice/35.mp3",
+  "voice/36.mp3",
+  "voice/37.mp3",
+  "voice/38.mp3",
+  "voice/39.mp3",
+  "voice/40.mp3",
+  "voice/41.mp3",
+  "voice/42.mp3"
+];
+
+let selectedVoice = null;
+let isGachaRunning = false;
+
+function gacha() {
+  if (isGachaRunning) return;
+  isGachaRunning = true;
+
+  const overlay = document.getElementById("darkOverlay");
+  const gachaLoading = document.getElementById("gachaLoading");
+
+  overlay.style.opacity = "1";
+  gachaLoading.style.opacity = "1";
+
+  const button = document.querySelector(".gachaButton");
+  const gif = document.getElementById("effectGif");
+  const playButton = document.getElementById("playButton");
+  const result = document.getElementById("result");
+
+  button.style.backgroundImage = 'url("img/gacha.button.2.png")';
+
+  resultImage.style.opacity = "0";
+  playButton.style.visibility = "hidden";
+  gif.style.opacity = "0";
+
+  setTimeout(() => {
+    const n = Math.floor(Math.random() * voices.length);
+    selectedVoice = voices[n];
+
+    gif.style.visibility = "visible";
+    gif.style.opacity = "1";
+
+    resultImage.src = `img/result_${n + 1}.png`; 
+    resultImage.style.opacity = "1";
+
+    playButton.style.visibility = "visible";
+    playButton.style.opacity = "1";
+
+    overlay.style.opacity = "0";
+    gachaLoading.style.opacity = "0";
+
+    button.style.backgroundImage = 'url("img/gacha.button.png")';
+    isGachaRunning = false;
+
+  }, 2000);
+}
+
+function copyURL() {
+  navigator.clipboard.writeText(window.location.href);
+  alert("URLをコピーしました");
+}
+
+const resultMap = {
+  "a8f3x": 1,
+  "k2m9q": 2,
+  "z7p4n": 3,
+  "x8Lp2Q": 4,
+  "m9Qa7Z": 5,
+  "zhu0de": 6,
+  "ao8h2a": 7,
+  "poui9o": 8,
+  "oauo2h": 9,
+  "dahu1w": 10,
+  "qw4dau": 11,
+  "6hd6u7": 12,
+  "zah3xw": 13,
+  "d1umnh": 14,
+  "0obf7a": 15,
+  "xdg7da": 16,
+  "DF1fwt": 17,
+  "0qRep0": 18,
+  "2afFa4": 19,
+  "wfa62Y": 20,
+  "fdj7yU": 21,
+  "r9d0d0": 22,
+  "z6mk4o": 23,
+  "xui3uQ": 24,
+  "Kyea7Z": 25,
+  "zyr94n": 26,
+  "xre72Q": 27,
+  "m9fa3e": 28,
+  "rCfg4n": 29,
+  "xga1Te": 30,
+  "a2tfa2": 31,
+  "ejyu9q": 32,
+  "zrj7Kr": 33,
+  "6dsfs8": 34,
+  "eHry0s": 35,
+  "gr6yh8": 36,
+  "7rsy0Q": 37,
+  "hsBrg9": 38,
+  "wsgsrg": 39,
+  "Ysg2ss": 40,
+  "Pfse1w": 41,
+  "p3Kx9T": 42
+};
+
+function shareOnX() {
+  const url = encodeURIComponent(window.location.href);
+  const text = encodeURIComponent("めいびさんのボイスガチャ引いたよ！みんなも引いてみない？");
+
+  const shareURL = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+  window.open(shareURL, "_blank");
+}
+
+function gacha() {
+  if (isGachaRunning) return;
+  isGachaRunning = true;
+
+  const overlay = document.getElementById("darkOverlay");
+  const gachaLoading = document.getElementById("gachaLoading");
+  const resultImage = document.getElementById("resultImage");
+
+  overlay.style.opacity = "1";
+  gachaLoading.style.opacity = "1";
+
+  const button = document.querySelector(".gachaButton");
+  const gif = document.getElementById("effectGif");
+  const playButton = document.getElementById("playButton");
+
+  button.style.backgroundImage = 'url("img/gacha.button.2.png")';
+
+  resultImage.style.opacity = "0";
+  playButton.style.visibility = "hidden";
+  gif.style.opacity = "0";
+
+  setTimeout(() => {
+
+    // 
+    const keys = Object.keys(resultMap);
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+
+    const n = resultMap[randomKey];
+    selectedVoice = `voice/${String(n).padStart(2, '0')}.mp3`;
+
+    gif.style.visibility = "visible";
+    gif.style.opacity = "1";
+
+    resultImage.src = `img/result_${n}.png`;
+    resultImage.style.opacity = "1";
+
+    playButton.style.visibility = "visible";
+    playButton.style.opacity = "1";
+
+    // 
+    const url = new URL(window.location);
+    url.searchParams.set("result", randomKey);
+    history.replaceState(null, "", url);
+
+    overlay.style.opacity = "0";
+    gachaLoading.style.opacity = "0";
+
+    button.style.backgroundImage = 'url("img/gacha.button.png")';
+    isGachaRunning = false;
+
+  }, 2000);
+}
+
+window.addEventListener("load", () => {
+
+  const params = new URLSearchParams(window.location.search);
+  const key = params.get("result");
+
+  if (key && resultMap[key]) {
+    const n = resultMap[key];
+
+    resultImage.src = `img/result_${n}.png`;
+    resultImage.style.opacity = "1";
+
+    selectedVoice = `voice/${String(n).padStart(2, '0')}.mp3`;
+
+    document.getElementById("playButton").style.visibility = "visible";
+    document.getElementById("playButton").style.opacity = "1";
+  }
+
+});
+
+let audio = null;
+let isPlaying = false;
+
+function playVoice() {
+  if (!selectedVoice || isPlaying) return;
+
+  audio = new Audio(selectedVoice);
+  isPlaying = true;
+
+  audio.play();
+
+  audio.onended = () => {
+    isPlaying = false;
+  };
+}
+</script>
+
+
+</body>
+</html>
